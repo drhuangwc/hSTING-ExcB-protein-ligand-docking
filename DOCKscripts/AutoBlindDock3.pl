@@ -5,7 +5,7 @@ if($#ARGV!=6)
 {
       print "**************************************************************************\n";
       print "* Error in input data!                                                   *\n";
-      print "* ./AutoDock.pl [Receptor] [Ligand] [PocketNum] [UserDir] [CB-DOCKpath] [exhaustiveness]               *\n";
+      print "* ./AutoDock.pl [Receptor] [Ligand] [PocketNum] [result_folder] [CB-DOCKpath] [numbermodes] [exhaustiveness]               *\n";
       print "* Example: ./AutoBlindDock.pl receptor.pdb ligand.sdf 5 test CB-DOCKpath vine_path *\n";
       print "**************************************************************************\n";
       exit 0;
@@ -18,20 +18,11 @@ my $protein=$ARGV[0];
 my $ligand=$ARGV[1];
 my $PocketNum=$ARGV[2];
 my $userDirName=$ARGV[3];
-my $progPath=$ARGV[4]; #"/home1/drhuangwc/bin/AUTODOCK_VINA/CB-Dock/prog";
+my $progPath=$ARGV[4]; 
 
-my $nm=$ARGV[5];#nm
-my $ex=$ARGV[6];#exhaustiveness
-
-
-my $prepare_receptor=$progPath.'/ADT_scripts/prepare_receptor4.py'; #$ARGV[5].'/prepare_receptor' 
+my $prepare_receptor=$progPath.'/prepare_receptor4.py'; 
 my $prepare_ligand='mk_prepare_ligand.py' ;
 my $autodockvina=$progPath.'/vina';
-
-
-
-
-#print './prog path ='.$progPath."\n";
 
 my $sec; my $min; my $hour;
 my $day; my $mon; my $year;
@@ -40,7 +31,9 @@ my $wday; my $yday; my $isdst;
    $year+=1900;
    $mon+=1;
 
-my $var = 5;#scale factor for calculating docking box
+my $var = 5;
+my $nm=$ARGV[5];
+my $ex=$ARGV[6];
 
 my @lig_name=split /[\.\/]/, $ligand;
 my @pro_name=split /[\.\/]/, $protein;
@@ -51,19 +44,16 @@ my $userDirPath=".\/dock_file\/$userDirName";
 mkdir $userDirPath;
 
 my $dock_time=$year.($mon<10?"0$mon":$mon).($day<10?"0$day":$day).($hour<10?"0$hour":$hour).($min<10?"0$min":$min).($sec<10?"0$sec":$sec);
-#my $dock_file=$mol_name."_".$year.($mon<10?"0$mon":$mon).($day<10?"0$day":$day).($hour<10?"0$hour":$hour).($min<10?"0$min":$min).($sec<10?"0$sec":$sec);
-#my $outf="$userDirPath\/$mol_name"."_".$year.($mon<10?"0$mon":$mon).($day<10?"0$day":$day).($hour<10?"0$hour":$hour).($min<10?"0$min":$min).($sec<10?"0$sec":$sec);
+
 my $dock_file=$mol_name;
-my $outf="$userDirPath\/$mol_name"; #."_".($mon<10?"0$mon":$mon).($day<10?"0$day":$day);
+my $outf="$userDirPath\/$mol_name"; 
 
 my $logfile=$dock_file."_log.txt";
 my $errfile=$dock_file."_err.txt";
 my $config="config.txt";
 my %conf;
-
-
-	mkdir "$outf";
-	system ("touch $outf\/$errfile");
+    mkdir "$outf";
+    system ("touch $outf\/$errfile");
     system ("touch $userDirPath\/status.txt");
     open (f, ">>$userDirPath\/status.txt");
     print f "$year-$mon-$day $hour:$min:$sec\n";
@@ -100,54 +90,47 @@ my %conf;
     my $pro_format=$pro_ori."_format.pdb";
     my $cmd="$progPath/FormatPDB_Simple $protein $pro_format";
     print "\n".$cmd."\n";
-	system ($cmd);#protein format  --error info
+	system ($cmd);
 	
 	if(-e $pro_format)
 	{
-		system "echo protein format success! >> $outf\/$logfile ";
+	system "echo protein format success! >> $outf\/$logfile ";
         print "\n protein format success! \n";
 	}
 	else
 	{
-		system "echo protein format error! >> $outf\/$errfile ";
+	system "echo protein format error! >> $outf\/$errfile ";
         print "\n protein format error! \n";
-		#system ("rm $protein");
-		#system "rm $ligand";
-		system("perl -pi -e 's/$year-$mon-$day $hour:$min:$sec\n//' $userDirPath\/status.txt");
-		#system ("tar -zcf $userDirPath\/$dock_file.tar.gz $outf");
-		exit;
+
+	system("perl -pi -e 's/$year-$mon-$day $hour:$min:$sec\n//' $userDirPath\/status.txt");
+	exit;
 	}
 	
 	if(@lig_name[-1] ne "sdf")
 	{
         my $cmd="babel -i@lig_name[-1] $ligand -osdf $ligand.sdf -p 7";
         print $cmd."\n\n";
-		system "$cmd";#ligand format transfer --error info
-		#system "rm $ligand";
-		$ligand=$ligand.".sdf";
+	system "$cmd";#ligand format transfer --error info
+	$ligand=$ligand.".sdf";
 		
-		if(-e $ligand)
-		{
-			system "echo ligand transfer success! >> $outf\/$logfile ";
-		}
-		else
-		{
-			system "echo ligand transfer error! >> $outf\/$errfile ";
-			#system ("rm $protein");
-			system("perl -pi -e 's/$year-$mon-$day $hour:$min:$sec\n//' $userDirPath\/status.txt");
-			#system ("tar -zcf $userDirPath\/$dock_file.tar.gz $outf");
-			exit;
-		}
+	if(-e $ligand)
+	{
+		system "echo ligand transfer success! >> $outf\/$logfile ";
 	}
-	
-	#system ("rm $protein");
+	else
+	{
+		system "echo ligand transfer error! >> $outf\/$errfile ";
+		system("perl -pi -e 's/$year-$mon-$day $hour:$min:$sec\n//' $userDirPath\/status.txt");
+		exit;
+	}
+	}
 	system ("mv $pro_format $outf\/receptor.pdb");
 	system ("cp $ligand $outf\/ligand.sdf");	
 	
 	####################################################################
 	#curvatureSurface		
 	###################################################################
-    system("$progPath/curvatureSurface/bin/curvatureSurface $outf\/receptor.pdb $outf\/grid.pdb");
+    	system("$progPath/curvatureSurface/bin/curvatureSurface $outf\/receptor.pdb $outf\/grid.pdb");
 	
 	my $grid_filepath=$outf."/grid.pdb";
 	if(-e $grid_filepath)
@@ -158,16 +141,15 @@ my %conf;
 	{
 		system "echo curvature calculate error! >> $outf\/$errfile ";
 		system("perl -pi -e 's/$year-$mon-$day $hour:$min:$sec\n//' $userDirPath\/status.txt");
-		#system ("tar -zcf $userDirPath\/$dock_file.tar.gz $outf");
 		exit;
 	}
 
 	####################################################################
 	#clusters		
 	###################################################################
-    my $cmd="$progPath/clusters $outf\/grid.pdb $PocketNum > $outf\/conf.txt";
-    print "\n".$cmd."\n\n";
-	system "$cmd"; #change output to cout checkin git plus automatic compile script
+    	my $cmd="$progPath/clusters $outf\/grid.pdb $PocketNum > $outf\/conf.txt";
+    	print "\n".$cmd."\n\n";
+	system "$cmd"; 
 
 	####################################################################
 	#ADT_scripts: prepare_ligand4.py，prepare_receptor4.py, prepare_dpf4.py, eBoxSize.pl;                       
@@ -176,11 +158,9 @@ my %conf;
 	#prepare_dpf4.py——Find the center of the docking pocket, used in Re-Docking；                                 
 	#eBoxSize.pl——Calculate the size of the ligand;		
 	####################################################################
-	#system "$progPath/ADT_scripts/prepare_ligand4.py -l $outf\/ligand.sdf -C -o $outf\/ligand.pdbqt"; #change /home/ocean
-    #my $cmd="$prepare_ligand -i $outf\/ligand.sdf -o $outf\/ligand.pdbqt --pH 7.4";
-    my $cmd="$prepare_ligand -i $outf\/ligand.sdf -o $outf\/ligand.pdbqt --keep_nonpolar_hydrogens";    
-    print "\n".$cmd."\n\n";
-    system "$cmd"; #change /home/ocean/Softwares/mgltools/bin/python automatic script
+	my $cmd="$prepare_ligand -i $outf\/ligand.sdf -o $outf\/ligand.pdbqt --keep_nonpolar_hydrogens";    
+
+	system "$cmd";
     
 	my $lig_filepath=$outf."/ligand.pdbqt";
     
@@ -194,14 +174,12 @@ my %conf;
 		system "echo ligand pdbqt transfer error! >> $outf\/$errfile ";
         print "\n ligand pdbqt transfer error! \n";
 		system("perl -pi -e 's/$year-$mon-$day $hour:$min:$sec\n//' $userDirPath\/status.txt");
-		#system ("tar -zcf $userDirPath\/$dock_file.tar.gz $outf");
 		exit;
 	}
 
-	#system "$progPath/ADT_scripts/prepare_receptor4.py -r $outf\/receptor.pdb -o $outf\/receptor.pdbqt -A hydrogens -U nphs_lps_waters";
-    my $cmd="$prepare_receptor -r $outf\/receptor.pdb -o $outf\/receptor.pdbqt";
-    print "\n".$cmd."\n\n";
-    system "$cmd";
+        my $cmd="$prepare_receptor -r $outf\/receptor.pdb -o $outf\/receptor.pdbqt";
+        print "\n".$cmd."\n\n";
+        system "$cmd";
 
 	
 	my $pro_filepath=$outf."/receptor.pdbqt";
@@ -215,17 +193,13 @@ my %conf;
 		system "echo receptor pdbqt transfer error! >> $outf\/$errfile ";
         print "\n receptor pdbqt transfer error! \n";
 		system("perl -pi -e 's/$year-$mon-$day $hour:$min:$sec\n//' $userDirPath\/status.txt");
-		#system ("tar -zcf $userDirPath\/$dock_file.tar.gz $outf");
 		exit;
 	}
 	
-	system "perl $progPath/ADT_scripts/eBoxSize.pl $outf\/ligand.pdbqt >$outf\/tem_1.txt";
+	system "perl $progPath/eBoxSize.pl $outf\/ligand.pdbqt >$outf\/tem_1.txt";
 		
 #####################ReDocking and GlobalDocking########################
 #（2）get the ligand size;
-	#my $nm=3; #=9
-	#my $ex=128; #=8 4;#24
-
 	my $sx;
 	open FILE1, "<$outf\/tem_1.txt" or die "Error in opening tem_1.txt";
 	while(<FILE1>)
@@ -306,10 +280,10 @@ my %conf;
 			$_sz = $sx + 2*$var;
 		}
 		
-		#my $volume= $array[7];
+
         my $out_ligand=$mol_name."_out_".$num.".pdbqt";
 
-		#system "echo $num  $_cx  $_cy  $_cz  $_sx  $_sy  $_sz >> $outf\/$config ";
+
 		$conf{$num}="$num  $array[7]  $_cx  $_cy  $_cz  $_sx  $_sy  $_sz  ";
 		system "echo Calculate $num --LocalDocking >> $outf\/$logfile ";
         print "\n Calculate $num --LocalDocking >> $outf\/$logfile \n";
@@ -327,7 +301,6 @@ my %conf;
 			system "echo docking error! >> $outf\/$errfile ";
             print "docking error \n";
 			system("perl -pi -e 's/$year-$mon-$day $hour:$min:$sec\n//' $userDirPath\/status.txt");
-			#system ("tar -zcf $userDirPath\/$dock_file.tar.gz $outf");
 			exit;
 		}
 	}
@@ -347,8 +320,6 @@ my %conf;
 		system "babel -ipdbqt $_ -osdf $out_ligand ---errorlevel 1";
 
 	}
-	#system "rm $outf\/*.pdbqt";
-	#system "rm $outf\/grid.pdb";
 	
 ###################################################################
 #get the vina score of the first pose
@@ -399,18 +370,8 @@ for(my $i=0; $i<=$#sdf; $i++)
 	
 }
 
-
-
 ####################################################################
-#system ("sed -i /$year-$mon-$day $hour:$min:$sec\n/d $userDirPath\/status.txt");
 system("perl -pi -e 's/$year-$mon-$day $hour:$min:$sec\n//' $userDirPath\/status.txt");
 system ("mv $outf\/receptor.pqbk $outf\/receptor.pdbqt");
 system ("mv $outf\/ligand.pqbk $outf\/ligand.pdbqt");
-#open (f, "$userDirPath\/status.txt");
-#print f "$year-$mon-$day $hour:$min:$sec\n";
-#close f;
 
-#system ("rm $userDirPath\/$dock_file\_run.txt");
-#system("perl -pi -e 's/$dock_file $PocketNum\n//' $userDirPath\/process.txt"); 
-#system ("tar -zcf $userDirPath\/$dock_file.tar.gz $outf");
-#system ("rm -R $outf");
