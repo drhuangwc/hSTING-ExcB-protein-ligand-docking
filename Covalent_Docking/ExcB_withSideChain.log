@@ -1,0 +1,24 @@
+loading receptor: ADFRformat_hSTINGdCYS.pdbqt
+set box using user
+    Box center:    93.137   103.718    83.346
+    Box length:    25.000    25.000    25.000
+    Box size  :        68        68        68
+    padding   :     0.000
+    spacing   :     0.375
+
+setting map types using: all to ['HS', 'Mg', 'HD', 'NA', 'Fe', 'Br', 'NS', 'A', 'C', 'Mn', 'G', 'F', 'I', 'H', 'J', 'N', 'Q', 'P', 'S', 'GA', 'Z', 'Zn', 'Cl', 'Ca', 'OA', 'SA', 'OS']
+
+computing maps for center=(93.137 103.718 83.346) size=(25.000 25.000 25.000) dims=(68 68 68) ...
+    maps computed in 2.01 (sec)
+the following 52 flexible receptor atoms did not contribute to the grid calculation:
+  A:ARG83:CA,CB,CG,CD,NE,HE,CZ,NH1,1HH1,2HH1,NH2,1HH2,2HH2,
+  A:ARG86:CA,CB,CG,CD,NE,HE,CZ,NH1,1HH1,2HH1,NH2,1HH2,2HH2,
+  A:ARG94:CA,CB,CG,CD,NE,HE,CZ,NH1,1HH1,2HH1,NH2,1HH2,2HH2,
+  A:ARG95:CG,CD,NE,HE,CZ,NH1,1HH1,2HH1,NH2,1HH2,2HH2,CA,CB,
+the following 3 covalent ligand atoms did not contribute to the grid calculation:
+  A:CYS91:CA,C,O,
+Adding gradient to maps ...
+done adding gradient to maps 18.65 (sec)
+making target file ExcB_withSideChain.trg ...done.
+    done. 24.31 (sec)
+
